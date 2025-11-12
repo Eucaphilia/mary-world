@@ -1,9 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from functools import wraps
-import secrets
 from datetime import datetime
 import sqlite3
+import psycopg2
+import psycopg2.extras
 import os
+import secrets
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -18,8 +20,6 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 
 if DATABASE_URL:
     # Production: Use PostgreSQL
-    import psycopg2
-    import psycopg2.extras
     DATABASE_TYPE = 'postgresql'
 else:
     # Development: Use SQLite
@@ -89,18 +89,16 @@ def add_post(title, content):
 def delete_post_by_id(post_id):
     """Delete a post from database"""
     conn = get_db_connection()
-    conn.execute('DELETE FROM posts WHERE id = ?', (post_id,))
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM posts WHERE id = %s' if DATABASE_TYPE == 'postgresql' 
+                  else 'DELETE FROM posts WHERE id = ?', (post_id,))
     conn.commit()
     conn.close()
 
-# Initialize database when app starts
-init_db()
-
-def admin_required(f):
+def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not session.get('is_admin'):
-            flash('Admin access required!', 'error')
+        if 'logged_in' not in session:
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
@@ -113,42 +111,41 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        password = request.form.get('password')
+        password = request.form['password']
         if password == ADMIN_PASSWORD:
-            session['is_admin'] = True
-            flash('Welcome back!', 'success')
+            session['logged_in'] = True
             return redirect(url_for('admin'))
-        flash('Invalid password!', 'error')
+        else:
+            flash('Invalid password')
     return render_template('login.html')
 
-@app.route('/logout')
-def logout():
-    session.pop('is_admin', None)
-    flash('Logged out successfully!', 'success')
-    return redirect(url_for('index'))
-
 @app.route('/admin')
-@admin_required
+@login_required
 def admin():
     posts = get_all_posts()
     return render_template('admin.html', posts=posts)
 
-@app.route('/admin/new', methods=['POST'])
-@admin_required
-def new_post():
-    title = request.form.get('title')
-    content = request.form.get('content')
-    if title and content:
-        add_post(title, content)
-        flash('Post created! ✨', 'success')
+@app.route('/add_post', methods=['POST'])
+@login_required
+def add_post_route():
+    title = request.form['title']
+    content = request.form['content']
+    add_post(title, content)
     return redirect(url_for('admin'))
 
-@app.route('/admin/delete/<int:post_id>')
-@admin_required
-def delete_post(post_id):
+@app.route('/delete_post/<int:post_id>')
+@login_required
+def delete_post_route(post_id):
     delete_post_by_id(post_id)
-    flash('Post deleted! 🗑️', 'success')
     return redirect(url_for('admin'))
+
+@app.route('/logout')
+def logout():
+    session.pop('logged_in', None)
+    return redirect(url_for('index'))
+
+# Initialize database when app starts
+init_db()
 
 if __name__ == '__main__':
     app.run(debug=True)
