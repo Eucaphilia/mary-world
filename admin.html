@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - My Blog</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #ffeef7 0%, #f8d7da 50%, #fbb6ce 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(219, 112, 147, 0.3);
+            border: 1px solid #f8d7da;
+        }
+        h1 {
+            color: #d63384;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .nav {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 15px;
+            background: linear-gradient(135deg, #fff0f6 0%, #fce4ec 100%);
+            border-radius: 10px;
+            border: 1px solid #f8d7da;
+        }
+        .nav a {
+            color: #e91e63;
+            text-decoration: none;
+            margin: 0 15px;
+            padding: 10px 20px;
+            border: 2px solid #e91e63;
+            border-radius: 25px;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+        .nav a:hover {
+            background-color: #e91e63;
+            color: white;
+            transform: translateY(-2px);
+        }
+        .new-post-form {
+            background: linear-gradient(135deg, #fff0f6 0%, #fce4ec 100%);
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border: 2px solid #f8d7da;
+        }
+        .new-post-form h2 {
+            color: #d63384;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: bold;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: #e91e63;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 150px;
+        }
+        .btn {
+            background: linear-gradient(135deg, #e91e63 0%, #d63384 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .posts-section h2 {
+            color: #d63384;
+            border-bottom: 2px solid #e91e63;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .post-item {
+            background: linear-gradient(135deg, #fff0f6 0%, #fce4ec 100%);
+            border: 1px solid #f8d7da;
+            margin-bottom: 15px;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(219, 112, 147, 0.15);
+        }
+        .post-item h3 {
+            color: #d63384;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        .post-date {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+        .post-content {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            white-space: pre-wrap;
+        }
+        .delete-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+        .delete-btn:hover {
+            transform: translateY(-1px);
+        }
+        .no-posts {
+            text-align: center;
+            color: #7f8c8d;
+            font-style: italic;
+            margin: 40px 0;
+            font-size: 1.2em;
+        }
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+        .flash {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .flash.success {
+            background-color: #f0e5f0;
+            color: #7a4f7a;
+            border: 1px solid #e4bee4;
+        }
+        .flash.error {
+            background-color: #fde2e7;
+            color: #a94564;
+            border: 1px solid #f5abb5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Admin Dashboard</h1>
+        
+        <div class="nav">
+            <a href="{{ url_for('index') }}">🏠 View Blog</a>
+            <a href="{{ url_for('logout') }}">🚪 Logout</a>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- New Post Form -->
+        <div class="new-post-form">
+            <h2>✍️ Create New Post</h2>
+            <form method="POST" action="{{ url_for('new_post') }}">
+                <div class="form-group">
+                    <label for="title">Post Title:</label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="content">Post Content:</label>
+                    <textarea id="content" name="content" required placeholder="Write your amazing blog post here..."></textarea>
+                </div>
+                <button type="submit" class="btn">Publish Post</button>
+            </form>
+        </div>
+
+        <!-- Existing Posts -->
+        <div class="posts-section">
+            <h2>📝 Manage Posts ({{ posts|length }} posts)</h2>
+            
+            {% if posts %}
+                {% for post in posts %}
+                    <div class="post-item">
+                        <h3>{{ post.title }}</h3>
+                        <div class="post-date">📅 {{ post.date }}</div>
+                        <div class="post-content">{{ post.content }}</div>
+                        <a href="{{ url_for('delete_post', post_id=post.id) }}" 
+                           class="delete-btn" 
+                           onclick="return confirm('Are you sure you want to delete this post?')">
+                           🗑️ Delete
+                        </a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-posts">
+                    <p>📝 No posts created yet!</p>
+                    <p>Create your first post using the form above.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
